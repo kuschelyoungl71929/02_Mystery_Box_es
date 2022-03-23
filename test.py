@@ -1,19 +1,21 @@
+#Import the Tkinter library
 from tkinter import *
-from functools import partial
-import random
-
-class Test:
-    def __init__(self, parent):
-       
-        self.start_frame = Frame(padx=10, pady=10)
-        self.start_frame.geometry("400x200")
-
-        
-
-
-
-if __name__ == "__main__":
-    root = Tk()
-    root.title("title goes here")
-    something = Test(root)
-    root.mainloop()
+from tkinter import filedialog
+from PIL import Image, ImageTk
+#Create an instance of Tkinter frame
+win= Tk()
+#Define the geometry
+win.geometry("750x350")
+win.title("Image Gallery")
+def select_file():
+   path= filedialog.askopenfilename(title="Select an Image", filetype=(('image    files','*.jpg'),('all files','*.*')))
+   img= Image.open(path)
+   img=ImageTk.PhotoImage(img)
+   label= Label(win, image= img)
+   label.image= img
+   label.pack()
+#Create a label and a Button to Open the dialog
+Label(win, text="Click the Button below to select an Image", font=('Caveat 15 bold')).pack(pady=20)
+button= Button(win, text="Select to Open", command= select_file)
+button.pack(ipadx=5, pady=15)
+win.mainloop()
