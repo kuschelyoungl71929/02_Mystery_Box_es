@@ -6,11 +6,13 @@ import random
 
 
 class Start:
-    def __init__(self, parent):
+    def __init__(self, partner):
 
        #start GUI frame
         self.start_frame = Frame(padx=10,bg="#D4E6F1")
         self.start_frame.grid()
+        
+        root.protocol('WM_DELETE_WINDOW', partial(self.close_button, partner))
 
         #define variable as integer
         self.starting_funds = IntVar()
@@ -48,11 +50,23 @@ class Start:
         self.high_stakes = Button(self.button_frame,text="High ($15)",bg="#FF5733",font="times 12 bold",command=lambda: self.to_game(3))
         self.high_stakes.grid(row=0,column=2,padx=5)
 
+        self.low_stakes.config(state=DISABLED)
+        self.medium_stakes.config(state=DISABLED)
+        self.high_stakes.config(state=DISABLED)
+
 
         #add funds button
         self.add_funds = Button(self.start_frame , width=10, text="Add Funds",font="times 12 bold", command=lambda: self.check_funds())
+        self.add_funds.focus()
+        self.add_funds.bind('<Return>', lambda e:self.check_funds())
         self.add_funds.grid(row=4,column=0,pady=10)
 
+    
+
+    def close_button(self, partner):
+        root.destroy()
+
+    
     def check_funds(self):
         
         #define start balance
@@ -64,10 +78,7 @@ class Start:
         self.start_entry.config(bg="white")
         self.amount_error.config(text="")
 
-        #disable all buttons
-        self.low_stakes.config(state=DISABLED)
-        self.medium_stakes.config(state=DISABLED)
-        self.high_stakes.config(state=DISABLED)
+
 
 
         #Error checker
@@ -119,13 +130,13 @@ class Start:
         
         #starting balance for the game
         start_balance = self.starting_funds.get()
-        self.start_frame.destroy()
         Game(self,stakes,start_balance)
+        root.withdraw()
 
 
 class Game:
     def __init__(self, partner, stakes, start_balance):
-        
+    
         photo=PhotoImage(file="02_Mystery_Box\Images_mb\question.gif")
 
         # set the funds variable 
@@ -139,6 +150,8 @@ class Game:
 
         # open a new window
         self.game_box = Toplevel()
+
+        self.game_box.protocol('WM_DELETE_WINDOW', partial(self.close_button, partner))
 
 
         # set the multiplier
@@ -154,16 +167,16 @@ class Game:
         self.display_frame.grid(row=3)
         
         # prize labels 
-        self.prize_label1 = Label(self.display_frame,pady=20, padx=10,image=photo)
-        self.prize_label1.photo = photo
+        self.prize_label1 = Label(self.display_frame,pady=20, padx=10,text="?", width = 10)
+
         self.prize_label1.grid(row=0, column=0, padx=10)
 
-        self.prize_label2 = Label(self.display_frame,pady=20, padx=10,image=photo)
-        self.prize_label2.photo = photo       
+        self.prize_label2 = Label(self.display_frame,pady=20, padx=10, text="?",  width = 10)
+    
         self.prize_label2.grid(row=0,column=1, padx=10)
 
-        self.prize_label3 = Label(self.display_frame,pady=20, padx=10,image=photo)
-        self.prize_label3.photo = photo
+        self.prize_label3 = Label(self.display_frame,pady=20, padx=10,text="?", width = 10)
+       
         self.prize_label3.grid(row=0,column=2, padx=10)
 
         # title
@@ -199,14 +212,10 @@ class Game:
 
         # action
         self.open_boxes = Button(self.start_frame, text="Open Boxes",font="times 16 bold", command=self.show_boxes)
-
-       
+        self.open_boxes.focus()
+        self.open_boxes.bind('<Return>', lambda e:self.show_boxes())
         self.open_boxes.grid(row=4,column=0,pady=10)
-
-
-        
-
-
+       
 
     def help(self):
 
@@ -218,44 +227,37 @@ class Game:
         
         play_balance = self.balance.get()
         stakes_multiplier = self.multiplier.get()
-
-        round_winnings= 0
         prizes = []
-        
-        
+        round_winnings= 0
+
         for item in range(0,3):
 
             prize_num = random.randint(1,100)
             
             if 0 < prize_num <= 15:
-                prize = PhotoImage(file="02_Mystery_Box\Images_mb\gold_low.gif")
+                prize = "gold ${}".format( 5 * stakes_multiplier)
                 round_winnings += 5 * stakes_multiplier
     
-            elif  15 < prize_num <= 32:
-                prize = PhotoImage(file="02_Mystery_Box\Images_mb\silver_low.gif")
+            elif  15 < prize_num <= 37:
+                prize = "silver ${}".format( 2 * stakes_multiplier)
                 round_winnings += 2 * stakes_multiplier
     
-            elif 32 < prize_num <= 75:
-                prize = PhotoImage(file="02_Mystery_Box\Images_mb\copper_low.gif")
+            elif 37 < prize_num <= 75:
+                prize = "copper ${}".format( 1 * stakes_multiplier)
                 round_winnings += 1 * stakes_multiplier
     
             elif 75 < prize_num <= 100:
-                prize = PhotoImage(file="02_Mystery_Box\Images_mb\lead.gif")
+                prize = "lead $0"
                 round_winnings += 0 * stakes_multiplier
 
             prizes.append(prize)
 
-        photo1= prizes[0]
-        photo2= prizes[1]
-        photo3= prizes[2]
-        
+        self.prize_label1.configure(text = prize)
+     
+        self.prize_label2.configure(text = prize)
+  
+        self.prize_label3.configure(text = prize) 
 
-        self.prize_label1.configure(image=photo1)
-        self.prize_label1.photo = photo1
-        self.prize_label2.configure(image=photo2)   
-        self.prize_label2.photo = photo2
-        self.prize_label3.configure(image=photo3) 
-        self.prize_label3.photo = photo3
 
         play_balance -= 5 * stakes_multiplier
         
@@ -270,15 +272,23 @@ class Game:
             self.game_box.focus()
             self.open_boxes.config(text="Add more Money to Play Again")
 
-        final_balance = "Money Spent this Round: ${}\nPrize Money this Round: ${}\nMoney out: ${}".format( 5 * stakes_multiplier,round_winnings,play_balance)
+        final_balance = "Money Spent this Round: ${}\nPrize Money this Round: ${}\nMoney out: ${}".format(5 * stakes_multiplier,round_winnings,play_balance)
 
         self.amount_start.configure(text=final_balance)
+
+        print("'{} | {} | {} - Cost: ${} | Payback: ${} | Current Balance: ${}'".format(prizes[0],prizes[1],prizes[2],5 * stakes_multiplier,round_winnings,play_balance))
+
+    def close_button(self, partner):
+        self.game_box.destroy()
+        root.deiconify()
 
 
 
 
 class Help: 
+
     def __init__(self, partner): 
+
 
         #background colour
         bkg_colour= "#c6e2ff" #light blue
@@ -288,6 +298,8 @@ class Help:
 
         #opens a new window
         self.help_box = Toplevel()
+        
+        self.help_box.protocol('WM_DELETE_WINDOW', partial(self.close_button, partner))
 
         #GUI Frame
         self.help_frame = Frame(self.help_box, width=400, height=300, bg=bkg_colour, padx=10, pady=10)
@@ -309,7 +321,6 @@ class Help:
     
     #close help function
     def close_button(self, partner):
-        partner.instruction.config(state=NORMAL)
         self.help_box.destroy()
 
 
